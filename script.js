@@ -3,15 +3,27 @@ let canvas, ctx;
 let width, height;
 
 // Display settings
-let offset = new Vec(0, 0), tmpOffset = new Vec(0, 0);
+let offset = new Vec(-120, 120), tmpOffset = null;
 let cellSize = 30, scale = 1;
 let mainGridLines = new Vec(8, 8);
 
-// Interactivity
+// Drawing
+let color = "black";
+let drawing = new Dynamic2DArray();
+
+// Widgets
 let tool = "move";
-let widgets = {
-    "test": new Widget(new Vec(20, 20), new Vec(30, 50))
-};
+let widgets = {};
+let curWidget = null;
+
+function initWidgets() {
+    widgets = {
+        "tools": new ToolsWidget(new Vec(20, 20), t => {
+            tool = t;
+            setToolCursor();
+        })
+    }
+}
 
 // Input
 let mouse = {
@@ -21,12 +33,18 @@ let mouse = {
 
 // Utility canvas functions
 function cursor(type) {
-    canvas.style.cursor = type;
+    document.body.style.cursor = type;
 }
 
-function fitCanvas() {
+function setToolCursor() {
+    cursor(tool === Tool.move ? "grab" : "default")
+}
+
+function updateCanvas() {
     canvas.width = width = window.innerWidth;
     canvas.height = height = window.innerHeight;
+
+    ctx.font = "11px JetBrains Mono";
 }
 
 // Load and events listeners
@@ -34,27 +52,62 @@ window.addEventListener("load", () => {
     canvas = document.querySelector("canvas");
     ctx = canvas.getContext("2d");
 
-    fitCanvas();
+    updateCanvas();
     setInterval(draw, 1000/60);
+
+    initWidgets();
 });
 
+window.addEventListener("resize", () => {
+    updateCanvas();
+    draw();
+});
+
+window.addEventListener("contextmenu", evt => evt.preventDefault())
+
 window.addEventListener("mousedown", evt => {
-    mouse.click = true;
-    mouse.dragStart = new Vec(evt);
-    tmpOffset = new Vec(offset);
-    if (tool === "move")
-        cursor("grabbing");
+    evt.preventDefault();
+
+    if (!mouse.click) {
+        mouse.click = true;
+        mouse.dragStart = new Vec(evt);
+
+        for (let w of Object.values(widgets).reverse())
+            if (w.inHandle(evt)) {
+                w.tmpPos = new Vec(w.pos);
+                curWidget = w;
+                cursor("grabbing");
+                return;
+            } else if (w.inWidget(evt)) {
+                w.onClick(evt);
+                return;
+            }
+
+        if (tool === Tool.move || evt.button === 1) {
+            tmpOffset = new Vec(offset);
+            cursor("grabbing");
+        }
+    }
 });
 
 window.addEventListener("mouseup", evt => {
     mouse.click = false;
-    if (tool === "move")
-        cursor("grab");
+    curWidget = null;
+    tmpOffset = null;
+
+    // Reset cursor
+    setToolCursor();
 });
 
 window.addEventListener("mousemove", evt => {
-    if (mouse.click && tool === "move")
-        offset = Vec.sub(evt, mouse.dragStart).add(tmpOffset);
+    let drag = Vec.sub(evt, mouse.dragStart);
+
+    if (curWidget != null) {
+        curWidget.pos = Vec.add(drag, curWidget.tmpPos);
+    }
+    else if (tmpOffset != null) {
+        offset = Vec.add(drag, tmpOffset);
+    }
 });
 
 window.addEventListener("mousewheel", evt => {
@@ -66,17 +119,13 @@ window.addEventListener("mousewheel", evt => {
     offset.mul(scale);
 })
 
-window.addEventListener("resize", () => {
-    fitCanvas();
-    draw();
-});
-
 // Draw functions
 function draw() {
     ctx.clearRect(0, 0, width, height);
     drawGrid();
-    for (let w of Object.values(widgets))
+    for (let w of Object.values(widgets)) {
         w.draw(ctx);
+    }
 }
 
 function drawGrid() {
