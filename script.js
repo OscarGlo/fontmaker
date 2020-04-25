@@ -10,7 +10,7 @@ let showGrid = true;
 let showAxes = true;
 
 // Drawing
-let color = "black", prevColor = "black";
+let color = "hsl(0, 100%, 0%)", prevColor = color;
 let prevButton = 0;
 let drawing = new Dynamic2DArray();
 let curPixel;
@@ -42,6 +42,7 @@ let mouse = {
     button: -1,
     dragStart: new Vec(0, 0)
 };
+let keys = {};
 
 // Utility canvas functions
 function cursor(type) {
@@ -79,6 +80,14 @@ window.addEventListener("load", () => {
     initWidgets();
 });
 
+window.addEventListener("keydown", evt => {
+    keys[evt.key] = true;
+});
+
+window.addEventListener("keyup", evt => {
+    delete keys[evt.key];
+});
+
 window.addEventListener("resize", () => {
     updateCanvas();
 
@@ -112,14 +121,14 @@ window.addEventListener("mousedown", evt => {
     if ((tool === Tool.move && evt.button === 0) || evt.button === 1) {
         tmpOffset = new Vec(offset);
         cursor("grabbing");
-    } else if (tool === Tool.pencil) {
-        drawPixel(evt);
-    } else if (tool === Tool.eyedropper && evt.button === 0) {
+    } else if ((tool === Tool.eyedropper && evt.button === 0) || keys["Alt"]) {
         let col = drawing.get(gridPos(evt));
         if (col != null) {
             color = col;
             widgets["color"].changeColor(col);
         }
+    } else if (tool === Tool.pencil) {
+        drawPixel(evt);
     }
 });
 
@@ -139,18 +148,20 @@ window.addEventListener("mouseup", evt => {
 window.addEventListener("mousemove", evt => {
     let drag = Vec.sub(evt, mouse.dragStart);
 
-    if (dragWidget != null) {
-        dragWidget.pos = Vec.add(drag, dragWidget.tmpPos);
-        dragWidget.updateScreenPos(screenSize);
-    }
-    else if (clickWidget != null) {
-        clickWidget.onDrag(evt);
-    }
-    else if (tmpOffset != null) {
-        offset = Vec.add(drag, tmpOffset);
-    }
-    else if (tool === Tool.pencil && mouse.click) {
-        drawPixel(evt);
+    if (mouse.click) {
+        if (dragWidget != null) {
+            dragWidget.pos = Vec.add(drag, dragWidget.tmpPos);
+            dragWidget.updateScreenPos(screenSize);
+        }
+        else if (clickWidget != null) {
+            clickWidget.onDrag(evt);
+        }
+        else if (tmpOffset != null) {
+            offset = Vec.add(drag, tmpOffset);
+        }
+        else if (tool === Tool.pencil) {
+            drawPixel(evt);
+        }
     }
 });
 
