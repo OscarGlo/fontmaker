@@ -127,7 +127,7 @@ window.addEventListener("mousedown", evt => {
     if ((tool === Tool.move && evt.button === 0) || evt.button === 1) {
         tmpOffset = new Vec(offset);
         cursor("grabbing");
-    } else if ((tool === Tool.eyedropper && evt.button === 0) || keys["Alt"]) {
+    } else if ((tool === Tool.eyedropper && evt.button === 0) || (tool === Tool.pencil && keys["Alt"])) {
         let col = drawing.get(gridPos(evt));
         if (col != null) {
             setColor(col);
