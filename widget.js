@@ -219,6 +219,12 @@ class PreviewWidget extends Widget {
     }
 }
 
+let colorRegEx = {
+    hsl: /hsl\((?<h>[0-9]+), *(?<s>[0-9]+)%, *(?<l>[0-9]+)%\)/,
+    rgb: /rgb\((?<r>[0-9]+), *(?<g>[0-9]+), *(?<b>[0-9]+)\)/,
+    hex: /#((?<r>[0-9a-f]{2})(?<g>[0-9a-f]{2})(?<b>[0-9a-f]{2})|(?<R>[0-9a-f])(?<G>[0-9a-f])(?<B>[0-9a-f]))/i
+}
+
 class ColorWidget extends Widget {
     constructor(pos, setColor) {
         super(pos, new Vec(120, 160), "Color");
@@ -244,16 +250,16 @@ class ColorWidget extends Widget {
         ];
     }
 
-    changeColor(c) {
-        let g = c.match(/hsl\((?<h>[0-9]+), ?(?<s>[0-9]+)%, ?(?<l>[0-9]+)%\)/).groups;
-        this.color = c;
-        this.hue = this.sliders[0].value = g.h;
-        this.saturation = this.sliders[1].value = g.s;
-        this.lightness = this.sliders[2].value = g.l;
+    pickColor(c) {
+        [this.hue, this.saturation, this.lightness] = hsl(c);
+        this.updateColor();
     }
 
     updateColor() {
         this.color = `hsl(${this.hue}, ${this.saturation}%, ${this.lightness}%)`
+        this.sliders[0].value = this.hue;
+        this.sliders[1].value = this.saturation;
+        this.sliders[2].value = this.lightness;
         this.setColor(this.color);
     }
 
@@ -277,7 +283,12 @@ class ColorWidget extends Widget {
     }
 
     onClick(evt) {
-        this.sliders.forEach(s => s.onClick(evt));
+        if (new Vec(evt).inRect(Vec.add(this.pos, new Vec(10, handleSize + 10)), new Vec(100, 40))) {
+            let c = prompt("Input a color in HSL, RGB or hex :\n'hsl(h, s%, l%)', 'rgb(r, g, b)' or '#RRGGBB'");
+            this.pickColor(c);
+        } else {
+            this.sliders.forEach(s => s.onClick(evt));
+        }
     }
 
     onDrag(evt) {
@@ -287,6 +298,62 @@ class ColorWidget extends Widget {
     onMouseUp(evt) {
         this.sliders.forEach(s => s.selected = false);
     }
+}
+
+function hsl(color) {
+    let hslMatch = color.match(colorRegEx.hsl);
+    if (hslMatch) {
+        let g = hslMatch.groups;
+        return [g.h, g.s, g.l];
+    }
+
+    let rgbMatch = color.match(colorRegEx.rgb);
+    if (rgbMatch) {
+        let {r, g, b} = rgbMatch.groups;
+        return rgbToHsl(r, g, b);
+    }
+
+    let hexMatch = color.match(colorRegEx.hex);
+    if (hexMatch) {
+        let {r, g, b, R, G, B} = hexMatch.groups;
+        if (r != null)
+            return rgbToHsl(parseInt(r, 16), parseInt(g, 16), parseInt(b, 16));
+
+        R += R;
+        G += G;
+        B += B;
+        return rgbToHsl(parseInt(R, 16), parseInt(G, 16), parseInt(B, 16));
+    }
+
+    return null;
+}
+
+function rgbToHsl(r, g, b) {
+    let h, s, l;
+
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    let max = Math.max(r, g, b);
+    let min = Math.min(r, g, b);
+    let delta = max - min;
+
+    l = (max + min) / 2;
+    if (delta === 0) {
+        h = 0;
+        s = 100;
+    } else {
+        if (r === max)
+            h = ((g - b) / delta) % 6;
+        else if (g === max)
+            h = (b - r) / delta + 2;
+        else
+            h = (r - g) / delta + 4;
+        h *= 60;
+        s = delta / Math.abs(1 - (2 * l - 1));
+    }
+
+    return [h, s * 100, l * 100].map(Math.floor);
 }
 
 class GridWidget extends Widget {
@@ -346,7 +413,7 @@ class PaletteWidget extends Widget {
         super(pos, new Vec(120, 75
         ), "Palette");
         this.setColor = setColor;
-        this.colors = ["hsl(0, 100%, 0%)"];
+        this.colors = ["hsl(0, 100%, 0%)", "hsl(0, 100%, 50%)", "hsl(120, 100%, 50%)", "hsl(240, 100%, 50%)"];
     }
 
     drawContent(ctx) {
@@ -386,11 +453,15 @@ class PaletteWidget extends Widget {
             let i = 7 * Math.floor(pos.y / 15) + Math.floor(pos.x / 15);
 
             if (i < this.colors.length) {
+                // Select color
                 if (evt.button === 0)
                     this.setColor(this.colors[i]);
+                // Remove color
                 else if (evt.button === 2)
                     this.colors.splice(i, 1);
-            } else if (i === this.colors.length && this.colors.length < 28 && !this.colors.includes(color))
+            }
+            // Add current color
+            else if (i === this.colors.length && this.colors.length < 28 && !this.colors.includes(color))
                 this.colors.push(color);
         }
     }

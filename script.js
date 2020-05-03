@@ -56,7 +56,7 @@ function setToolCursor() {
 
 function setColor(col) {
     color = col;
-    widgets["color"].changeColor(col);
+    widgets["color"].pickColor(col);
 }
 
 // Get grid position from window position
