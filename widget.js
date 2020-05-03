@@ -221,7 +221,7 @@ class PreviewWidget extends Widget {
 
 class ColorWidget extends Widget {
     constructor(pos, setColor) {
-        super(pos, new Vec(120, 185), "Color");
+        super(pos, new Vec(120, 160), "Color");
         this.setColor = setColor;
         this.color = "black";
         this.hue = 0;
@@ -245,7 +245,7 @@ class ColorWidget extends Widget {
     }
 
     changeColor(c) {
-        let g = c.match(/hsl\((?<h>[0-9]+), (?<s>[0-9]+)%, (?<l>[0-9]+)%\)/).groups;
+        let g = c.match(/hsl\((?<h>[0-9]+), ?(?<s>[0-9]+)%, ?(?<l>[0-9]+)%\)/).groups;
         this.color = c;
         this.hue = this.sliders[0].value = g.h;
         this.saturation = this.sliders[1].value = g.s;
@@ -338,5 +338,60 @@ class GridWidget extends Widget {
 
     onMouseUp(evt) {
         this.sliders.forEach(s => s.selected = false);
+    }
+}
+
+class PaletteWidget extends Widget {
+    constructor(pos, setColor) {
+        super(pos, new Vec(120, 75
+        ), "Palette");
+        this.setColor = setColor;
+        this.colors = ["hsl(0, 100%, 0%)"];
+    }
+
+    drawContent(ctx) {
+        /*// Palette backgrond
+        ctx.fillStyle = dark;
+        ctx.fillRect(this.pos.x + 5, this.pos.y + handleSize + 5, 110, Math.floor((this.colors.length - 1) / 7) * 15 + 20);
+        */
+        // Colors
+        let x = -15, y = 0;
+        this.colors.forEach((c, i) => {
+            ctx.fillStyle = c;
+            x = (i % 7) * 15;
+            y = Math.floor(i / 7) * 15;
+            ctx.fillRect(this.pos.x + 10 + x, this.pos.y + handleSize + 10 + y, 10, 10);
+        });
+
+        // Plus button
+        if (this.colors.length < 28) {
+            x += 15;
+            if (x === 105) {
+                y += 15;
+                x = 0;
+            }
+            x += this.pos.x + 10;
+            y += this.pos.y + handleSize + 10;
+            ctx.fillStyle = dark;
+            ctx.fillRect(x, y, 10, 10);
+            ctx.fillStyle = light;
+            ctx.fillRect(x + 4, y + 2, 2, 6);
+            ctx.fillRect(x + 2, y + 4, 6, 2);
+        }
+    }
+
+    onClick(evt) {
+        let pos = new Vec(evt).sub(this.pos).sub(new Vec(10, handleSize + 10));
+        if (Vec.mod(pos, 15).inRect(new Vec(0), new Vec(10))) {
+            let i = 7 * Math.floor(pos.y / 15) + Math.floor(pos.x / 15);
+
+            if (i < this.colors.length) {
+                if (evt.button === 0)
+                    this.setColor(this.colors[i]);
+                else if (evt.button === 2)
+                    this.colors.splice(i, 1);
+            } else if (i === this.colors.length && this.colors.length < 28 && !this.colors.includes(color))
+                this.colors.push(color);
+        }
     }
 }

@@ -27,6 +27,7 @@ function initWidgets() {
             setToolCursor();
         }),
         "color": new ColorWidget(new Vec(20, 170), c => color = c),
+        "palette": new PaletteWidget(new Vec(20, 370), setColor),
         "preview": new PreviewWidget(new Vec(screenSize.x - 120, 20), drawing),
         "grid": new GridWidget(new Vec(20, screenSize.y - 150 - handleSize), (gr, ax, mgl) => {
             showGrid = gr;
@@ -51,6 +52,11 @@ function cursor(type) {
 
 function setToolCursor() {
     cursor(tool === Tool.move ? "grab" : "default")
+}
+
+function setColor(col) {
+    color = col;
+    widgets["color"].changeColor(col);
 }
 
 // Get grid position from window position
@@ -124,8 +130,7 @@ window.addEventListener("mousedown", evt => {
     } else if ((tool === Tool.eyedropper && evt.button === 0) || keys["Alt"]) {
         let col = drawing.get(gridPos(evt));
         if (col != null) {
-            color = col;
-            widgets["color"].changeColor(col);
+            setColor(col);
         }
     } else if (tool === Tool.pencil) {
         drawPixel(evt);

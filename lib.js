@@ -55,6 +55,13 @@ class Vec {
         return this.map(a => a / n);
     }
 
+    mod(n) {
+        if (n.x)
+            return this.map(n, (a, b) => a % b);
+
+        return this.map(a => a % n);
+    }
+
     inRect(pos, size) {
         return this.x >= pos.x
             && this.y >= pos.y
@@ -82,6 +89,10 @@ class Vec {
 
     static div(u, n) {
         return new Vec(u).div(n);
+    }
+
+    static mod(u, n) {
+        return new Vec(u).mod(n);
     }
 }
 
