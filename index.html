@@ -17,8 +17,13 @@
 		
 		body {
 			overflow: hidden;
+			font-family: "JetBrains Mono", "Consolas", monospace;
 		}
 	</style>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mobile-detect/1.4.4/mobile-detect.min.js"
+	        integrity="sha256-69If14XjMwCuZXEZQDGBDC6HNz+xObaBiIskI9eKVis="
+	        crossorigin="anonymous"></script>
 	
 	<script src="lib.js"></script>
 	<script src="widget.js"></script>
@@ -26,5 +31,8 @@
 </head>
 <body>
 	<canvas></canvas>
+	<h2 class="mobile" style="display: none">
+		This app isn't compatible with mobile devices (or any touch only device).
+	</h2>
 </body>
 </html>

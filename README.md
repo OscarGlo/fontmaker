@@ -3,7 +3,9 @@
 Font Maker is a browser based pixel art editor for making simple "fonts".
 (More precisely, sets of characters exportable in image form)
 
-You can access it here: https://oscarglo.github.io/fontmaker
+You can access it here: https://oscarglo.github.io/fontmaker \
+Note that the app isn't compatible with mobiles. Tested on recent versions of Chrome and
+Firefox.
 
 This project was born after participating in my first game jam, where I discovered the pain
 of making text sprites pixel by pixel. This motivated me in creating this editor for

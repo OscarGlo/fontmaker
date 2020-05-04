@@ -220,9 +220,9 @@ class PreviewWidget extends Widget {
 }
 
 let colorRegEx = {
-    hsl: /hsl\((?<h>[0-9]+), *(?<s>[0-9]+)%, *(?<l>[0-9]+)%\)/,
-    rgb: /rgb\((?<r>[0-9]+), *(?<g>[0-9]+), *(?<b>[0-9]+)\)/,
-    hex: /#((?<r>[0-9a-f]{2})(?<g>[0-9a-f]{2})(?<b>[0-9a-f]{2})|(?<R>[0-9a-f])(?<G>[0-9a-f])(?<B>[0-9a-f]))/i
+    hsl: /hsl\(([0-9]+), *([0-9]+)%, *([0-9]+)%\)/,
+    rgb: /rgb\(([0-9]+), *([0-9]+), *([0-9]+)\)/,
+    hex: /#(?:([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})|([0-9a-f])([0-9a-f])([0-9a-f]))/i
 }
 
 class ColorWidget extends Widget {
@@ -302,20 +302,18 @@ class ColorWidget extends Widget {
 
 function hsl(color) {
     let hslMatch = color.match(colorRegEx.hsl);
-    if (hslMatch) {
-        let g = hslMatch.groups;
-        return [g.h, g.s, g.l];
-    }
+    if (hslMatch)
+        return hslMatch.slice(1);
 
     let rgbMatch = color.match(colorRegEx.rgb);
     if (rgbMatch) {
-        let {r, g, b} = rgbMatch.groups;
+        let [, r, g, b] = rgbMatch;
         return rgbToHsl(r, g, b);
     }
 
     let hexMatch = color.match(colorRegEx.hex);
     if (hexMatch) {
-        let {r, g, b, R, G, B} = hexMatch.groups;
+        let [, r, g, b, R, G, B] = hexMatch;
         if (r != null)
             return rgbToHsl(parseInt(r, 16), parseInt(g, 16), parseInt(b, 16));
 

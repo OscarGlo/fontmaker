@@ -80,6 +80,13 @@ window.addEventListener("load", () => {
     canvas = document.querySelector("canvas");
     ctx = canvas.getContext("2d");
 
+    // Check if user is not on mobile
+    let md = new MobileDetect(window.navigator.userAgent);
+    if (md.mobile()) {
+        canvas.style.display = "none";
+        document.querySelector(".mobile").style.display = "block";
+    }
+
     updateCanvas();
     setInterval(draw, 1000/60);
 
@@ -170,9 +177,9 @@ window.addEventListener("mousemove", evt => {
     }
 });
 
-window.addEventListener("mousewheel", evt => {
+window.addEventListener("wheel", evt => {
     offset.div(scale);
-    let d = evt.wheelDelta / 1200;
+    let d = evt.deltaY > 0 ? -0.1 : 0.1;
     scale += d;
     if (scale < 0.1) scale = 0.1;
     if (scale > 3) scale = 3;
