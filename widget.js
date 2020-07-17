@@ -408,8 +408,7 @@ class GridWidget extends Widget {
 
 class PaletteWidget extends Widget {
     constructor(pos, setColor) {
-        super(pos, new Vec(120, 75
-        ), "Palette");
+        super(pos, new Vec(120, 75), "Palette");
         this.setColor = setColor;
         this.colors = ["hsl(0, 100%, 0%)", "hsl(0, 100%, 50%)", "hsl(120, 100%, 50%)", "hsl(240, 100%, 50%)"];
     }
@@ -462,5 +461,11 @@ class PaletteWidget extends Widget {
             else if (i === this.colors.length && this.colors.length < 28 && !this.colors.includes(color))
                 this.colors.push(color);
         }
+    }
+}
+
+class CharactersWidget extends Widget {
+    constructor(pos) {
+        super(pos, new Vec(120, 100), "Characters")
     }
 }

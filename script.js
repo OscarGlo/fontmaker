@@ -33,7 +33,8 @@ function initWidgets() {
             showGrid = gr;
             showAxes = ax;
             mainGridLines = mgl;
-        })
+        }),
+        "characters": new CharactersWidget(new Vec(screenSize.x - 140, screenSize.y - 120 - handleSize))
     }
 }
 
