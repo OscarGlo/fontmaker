@@ -12,7 +12,8 @@ let showAxes = true;
 // Drawing
 let color = "hsl(0, 100%, 0%)", prevColor = color;
 let prevButton = 0;
-let drawing = new Dynamic2DArray();
+let characters = {a: new Dynamic2DArray()};
+let curChar = "a";
 let curPixel;
 
 // Widgets
@@ -22,19 +23,23 @@ let dragWidget, clickWidget;
 
 function initWidgets() {
     widgets = {
-        "tools": new ToolsWidget(new Vec(20), t => {
+        tools: new ToolsWidget(new Vec(20), t => {
             tool = t;
             setToolCursor();
         }),
-        "color": new ColorWidget(new Vec(20, 170), c => color = c),
-        "palette": new PaletteWidget(new Vec(20, 370), setColor),
-        "preview": new PreviewWidget(new Vec(screenSize.x - 120, 20), drawing),
-        "grid": new GridWidget(new Vec(20, screenSize.y - 150 - handleSize), (gr, ax, mgl) => {
+        color: new ColorWidget(new Vec(20, 170), c => color = c),
+        palette: new PaletteWidget(new Vec(20, 370), setColor),
+        preview: new PreviewWidget(new Vec(screenSize.x - 120, 20), characters[curChar]),
+        grid: new GridWidget(new Vec(20, screenSize.y - 150 - handleSize), (gr, ax, mgl) => {
             showGrid = gr;
             showAxes = ax;
             mainGridLines = mgl;
         }),
-        "characters": new CharactersWidget(new Vec(screenSize.x - 140, screenSize.y - 120 - handleSize))
+        characters: new CharactersWidget(new Vec(screenSize.x - 140, screenSize.y - 120 - handleSize),
+            characters, c => {
+                curChar = c;
+                widgets.preview.drawing = characters[curChar];
+            })
     }
 }
 
@@ -136,7 +141,7 @@ window.addEventListener("mousedown", evt => {
         tmpOffset = new Vec(offset);
         cursor("grabbing");
     } else if ((tool === Tool.eyedropper && evt.button === 0) || (tool === Tool.pencil && keys["Alt"])) {
-        let col = drawing.get(gridPos(evt));
+        let col = characters[curChar].get(gridPos(evt));
         if (col != null) {
             setColor(col);
         }
@@ -196,9 +201,9 @@ function drawPixel(evt) {
         prevColor = color;
 
         if (mouse.button === 0)
-            drawing.set(p, color);
+            characters[curChar].set(p, color);
         else
-            drawing.delete(p);
+            characters[curChar].delete(p);
     }
 }
 
@@ -213,7 +218,7 @@ function draw() {
 }
 
 function drawCells() {
-    drawing.forEach((c, x, y) => {
+    characters[curChar].forEach((c, x, y) => {
         let pos = posFromGrid(new Vec(x, y));
         let size = cellSize * scale + 0.5;
         ctx.fillStyle = c;

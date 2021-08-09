@@ -33,6 +33,7 @@ class Widget {
 
         // Draw widget name
         ctx.fillStyle = light;
+        ctx.textAlign = "left";
         ctx.textBaseline = "top";
         ctx.fillText(this.name, this.pos.x + 2, this.pos.y + 2)
 
@@ -44,8 +45,11 @@ class Widget {
     }
 
     drawContent(ctx) {}
+
     onClick(evt) {}
+
     onDrag(evt) {}
+
     onMouseUp(evt) {}
 }
 
@@ -172,9 +176,9 @@ class ToolsWidget extends Widget {
         for (let i = 0; i < nbTools; i++) {
             let dPos = Vec.add(this.pos, new Vec(5, 5 + handleSize + 35 * i));
             if (this.tool === i)
-                ctx.fillRect(dPos.x, dPos.y,30, 30)
+                ctx.fillRect(dPos.x, dPos.y, 30, 30);
             if (this.icons[i].loaded)
-                ctx.drawImage(this.icons[i], dPos.x + 4, dPos.y + 4)
+                ctx.drawImage(this.icons[i], dPos.x + 4, dPos.y + 4);
         }
     }
 
@@ -406,6 +410,21 @@ class GridWidget extends Widget {
     }
 }
 
+function drawPlus(widget, ctx, x, y) {
+    x += 15;
+    if (x === 105) {
+        y += 15;
+        x = 0;
+    }
+    x += widget.pos.x + 10;
+    y += widget.pos.y + handleSize + 10;
+    ctx.fillStyle = dark;
+    ctx.fillRect(x, y, 10, 10);
+    ctx.fillStyle = light;
+    ctx.fillRect(x + 4, y + 2, 2, 6);
+    ctx.fillRect(x + 2, y + 4, 6, 2);
+}
+
 class PaletteWidget extends Widget {
     constructor(pos, setColor) {
         super(pos, new Vec(120, 75), "Palette");
@@ -414,7 +433,7 @@ class PaletteWidget extends Widget {
     }
 
     drawContent(ctx) {
-        /*// Palette backgrond
+        /*// Palette background
         ctx.fillStyle = dark;
         ctx.fillRect(this.pos.x + 5, this.pos.y + handleSize + 5, 110, Math.floor((this.colors.length - 1) / 7) * 15 + 20);
         */
@@ -429,18 +448,7 @@ class PaletteWidget extends Widget {
 
         // Plus button
         if (this.colors.length < 28) {
-            x += 15;
-            if (x === 105) {
-                y += 15;
-                x = 0;
-            }
-            x += this.pos.x + 10;
-            y += this.pos.y + handleSize + 10;
-            ctx.fillStyle = dark;
-            ctx.fillRect(x, y, 10, 10);
-            ctx.fillStyle = light;
-            ctx.fillRect(x + 4, y + 2, 2, 6);
-            ctx.fillRect(x + 2, y + 4, 6, 2);
+            drawPlus(this, ctx, x, y);
         }
     }
 
@@ -465,7 +473,76 @@ class PaletteWidget extends Widget {
 }
 
 class CharactersWidget extends Widget {
-    constructor(pos) {
-        super(pos, new Vec(120, 100), "Characters")
+    constructor(pos, characters, setCurrent) {
+        super(pos, new Vec(120, 100), "Characters");
+        this.characters = characters;
+        this.current = 0;
+        this.setCurrent = i => {
+            this.current = i;
+            setCurrent(Object.keys(this.characters)[i]);
+        }
+    }
+
+    drawContent(ctx) {
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "center";
+        let x = -15, y = 0;
+        Object.keys(this.characters).forEach((c, i) => {
+            x = (i % 7) * 15;
+            y = Math.floor(i / 7) * 15;
+            let px = this.pos.x + 10 + x,
+                py = this.pos.y + handleSize + 10 + y;
+
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.rect(px, py, 10, 10);
+            // Outline
+            if (this.current === i) {
+                ctx.strokeStyle = dark;
+                ctx.stroke();
+            }
+            // Background
+            ctx.fill();
+            // Character
+            ctx.fillStyle = dark;
+            ctx.fillText(c, px + 5, py + 5);
+        });
+
+        // Plus button
+        if (Object.keys(this.characters).length < 35) {
+            drawPlus(this, ctx, x, y);
+        }
+    }
+
+    onClick(evt) {
+        let pos = new Vec(evt).sub(this.pos).sub(new Vec(10, handleSize + 10));
+        if (Vec.mod(pos, 15).inRect(new Vec(0), new Vec(10))) {
+            let i = 7 * Math.floor(pos.y / 15) + Math.floor(pos.x / 15);
+
+            let chars = Object.keys(this.characters);
+
+            if (i < chars.length) {
+                // Select color
+                if (evt.button === 0)
+                    this.setCurrent(i);
+                // Remove color
+                else if (evt.button === 2 && chars.length > 1) {
+                    delete this.characters[chars[i]];
+                    if (this.current > i)
+                        this.setCurrent(Math.max(this.current - 1, 0));
+                    else if (this.current === i)
+                        this.setCurrent(Math.min(this.current, chars.length - 2));
+                }
+            }
+            // Add character
+            else if (i === chars.length && chars.length < 35) {
+                let c;
+                do {
+                    c = prompt("New character");
+                } while (c == null || c.length !== 1 || chars.includes(c));
+                this.characters[c] = new Dynamic2DArray();
+                this.setCurrent(chars.length);
+            }
+        }
     }
 }
