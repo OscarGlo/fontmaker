@@ -149,7 +149,8 @@ class Checkbox {
 Tool = {
     pencil: 0,
     eyedropper: 1,
-    move: 2
+    fill: 2,
+    move: 3
 };
 let nbTools = Object.keys(Tool).length;
 

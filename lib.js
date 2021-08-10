@@ -107,11 +107,8 @@ class Dynamic2DArray {
     }
 
     get(p) {
-        if (!p.inRect(this.offset, this.size))
-            return null;
-
         p = Vec.sub(p, this.offset)
-        return this.arr[p.y][p.x];
+        return this.arr[p.y] != null ? this.arr[p.y][p.x] : null;
     }
 
     set(p, n) {

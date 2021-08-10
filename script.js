@@ -23,12 +23,12 @@ let dragWidget, clickWidget;
 
 function initWidgets() {
     widgets = {
-        tools: new ToolsWidget(new Vec(20), t => {
+        color: new ColorWidget(new Vec(20), c => color = c),
+        palette: new PaletteWidget(new Vec(20, 210), setColor),
+        tools: new ToolsWidget(new Vec(20, 315), t => {
             tool = t;
             setToolCursor();
         }),
-        color: new ColorWidget(new Vec(20, 170), c => color = c),
-        palette: new PaletteWidget(new Vec(20, 370), setColor),
         preview: new PreviewWidget(new Vec(screenSize.x - 120, 20), characters[curChar]),
         grid: new GridWidget(new Vec(20, screenSize.y - 150 - handleSize), (gr, ax, mgl) => {
             showGrid = gr;
@@ -50,6 +50,18 @@ let mouse = {
     dragStart: new Vec(0, 0)
 };
 let keys = {};
+
+const mod = (n, m) => ((n % m) + m) % m;
+
+// Shortcuts
+let keybinds = {
+    "p": () => widgets.tools.setTool(Tool.pencil),
+    "e": () => widgets.tools.setTool(Tool.eyedropper),
+    "f": () => widgets.tools.setTool(Tool.fill),
+    "m": () => widgets.tools.setTool(Tool.move),
+    "ArrowLeft": () => widgets.characters.setCurrent(mod(widgets.characters.current - 1, Object.keys(characters).length)),
+    "ArrowRight": () => widgets.characters.setCurrent(mod(widgets.characters.current + 1, Object.keys(characters).length))
+}
 
 // Utility canvas functions
 function cursor(type) {
@@ -101,6 +113,9 @@ window.addEventListener("load", () => {
 
 window.addEventListener("keydown", evt => {
     keys[evt.key] = true;
+
+    let keybind = keybinds[evt.key];
+    if (keybind) keybind();
 });
 
 window.addEventListener("keyup", evt => {
@@ -147,6 +162,8 @@ window.addEventListener("mousedown", evt => {
         }
     } else if (tool === Tool.pencil) {
         drawPixel(evt);
+    } else if (tool === Tool.fill) {
+        fill(evt);
     }
 });
 
@@ -204,6 +221,30 @@ function drawPixel(evt) {
             characters[curChar].set(p, color);
         else
             characters[curChar].delete(p);
+    }
+}
+
+function fill(evt) {
+    let p = gridPos(evt);
+    if (!p.equals(curPixel) || color !== prevColor) {
+        curPixel = p;
+        prevColor = color;
+
+        let cur = characters[curChar];
+
+        let repColor = cur.get(p);
+        if (repColor == null || repColor === color) return;
+
+        let toFill = [p];
+        while (toFill.length > 0) {
+            let next = toFill.shift();
+            for (let v of [new Vec(0, 1), new Vec(0, -1), new Vec(1, 0), new Vec(-1, 0)]) {
+                let toAdd = Vec.add(next, v);
+                if (cur.get(toAdd) === repColor)
+                    toFill.push(toAdd);
+            }
+            cur.set(next, color);
+        }
     }
 }
 
