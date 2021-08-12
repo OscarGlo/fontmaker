@@ -13,6 +13,8 @@ let showAxes = true;
 let color = "hsl(0, 100%, 0%)", prevColor = color;
 let prevButton = 0;
 let characters = {a: new Dynamic2DArray()};
+let selectionBox = null;
+let selection = null;
 let curChar = "a";
 let curPixel;
 
@@ -164,6 +166,8 @@ window.addEventListener("mousedown", evt => {
         drawPixel(evt);
     } else if (tool === Tool.fill) {
         fill(evt);
+    } else if (tool === Tool.select) {
+        selectionBox = [gridPos(evt), gridPos(evt)];
     }
 });
 
@@ -171,6 +175,11 @@ window.addEventListener("mouseup", evt => {
     mouse.click = false;
     tmpOffset = null;
     dragWidget = null;
+    if (selectionBox != null) {
+        [fr, to] = Vec.align(...selectionBox);
+        selection = characters[curChar].subArray(fr, to, true);
+        selectionBox = null;
+    }
     if (clickWidget) {
         clickWidget.onMouseUp(evt);
         clickWidget = null;
@@ -187,15 +196,14 @@ window.addEventListener("mousemove", evt => {
         if (dragWidget != null) {
             dragWidget.pos = Vec.add(drag, dragWidget.tmpPos);
             dragWidget.updateScreenPos(screenSize);
-        }
-        else if (clickWidget != null) {
+        } else if (clickWidget != null) {
             clickWidget.onDrag(evt);
-        }
-        else if (tmpOffset != null) {
+        } else if (tmpOffset != null) {
             offset = Vec.add(drag, tmpOffset);
-        }
-        else if (tool === Tool.pencil) {
+        } else if (tool === Tool.pencil) {
             drawPixel(evt);
+        } else if (tool === Tool.select) {
+            selectionBox[1] = gridPos(evt);
         }
     }
 });
@@ -265,6 +273,14 @@ function drawCells() {
         ctx.fillStyle = c;
         ctx.fillRect(pos.x, pos.y, size, size);
     });
+    if (selection != null) {
+        selection.forEach((c, x, y) => {
+            let pos = posFromGrid(new Vec(x, y));
+            let size = cellSize * scale * 0.8 + 0.5;
+            ctx.fillStyle = c;
+            ctx.fillRect(pos.x + cellSize * scale * 0.1, pos.y + cellSize * scale * 0.1, size, size);
+        });
+    }
 }
 
 function drawGrid() {

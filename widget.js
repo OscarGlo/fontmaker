@@ -150,7 +150,8 @@ Tool = {
     pencil: 0,
     eyedropper: 1,
     fill: 2,
-    move: 3
+    select:3,
+    move: 4
 };
 let nbTools = Object.keys(Tool).length;
 

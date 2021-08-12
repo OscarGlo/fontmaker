@@ -94,6 +94,10 @@ class Vec {
     static mod(u, n) {
         return new Vec(u).mod(n);
     }
+
+    static align(u, v) {
+        return [new Vec(Math.min(u.x, v.x), Math.min(u.y, v.y)), new Vec(Math.max(u.x, v.x), Math.max(u.y, v.y))];
+    }
 }
 
 class Dynamic2DArray {
@@ -150,9 +154,15 @@ class Dynamic2DArray {
 
         p = Vec.sub(p, this.offset);
 
-        if (this.arr[p.y])
-            this.arr[p.y][p.x] = null;
+        if (this.arr[p.y]) {
+            let v = this.arr[p.y][p.x];
+            delete this.arr[p.y][p.x];
+            this.trim();
+            return v;
+        }
+    }
 
+    trim() {
         // Remove empty columns
         while (this.size.x > 0 && this.emptyCol(0))
             this.shiftCol();
@@ -218,7 +228,7 @@ class Dynamic2DArray {
 
     unshiftCol(n = 1) {
         this.offset.x -= n;
-        this.arr.forEach(l => l.unshift(...new Array(n).fill(null)));
+        this.arr.forEach(l => l.unshift(...new Array(n).fill(undefined)));
     }
 
     shiftCol() {
@@ -227,11 +237,30 @@ class Dynamic2DArray {
     }
 
     pushCol(n = 1) {
-        this.arr.forEach(l => l.push(...new Array(n).fill(null)));
+        this.arr.forEach(l => l.push(...new Array(n).fill(undefined)));
     }
 
     popCol() {
         this.arr.forEach(l => l.pop());
+    }
+
+    subArray(fr, to, suppr = false) {
+        let subArray = new Dynamic2DArray();
+        fr.sub(this.offset);
+        to.sub(this.offset);
+        for (let y = fr.y; y <= to.y; y++)
+            for (let x = fr.x; x <= to.x; x++) {
+                if (this.arr[y]) {
+                    let v = this.arr[y][x];
+                    if (suppr)
+                        delete this.arr[y][x];
+                    if (v != null)
+                        subArray.set(new Vec(x, y).add(this.offset), v);
+                }
+            }
+        if (suppr)
+            this.trim();
+        return subArray;
     }
 
     toString() {
